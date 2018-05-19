@@ -4,31 +4,29 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib import style
 from mpl_toolkits.mplot3d import Axes3D
-#import keras
-#from keras.models import Sequential
-#from keras.layers import Dense, Dropout
-#from sklearn.metrics import confusion_matrix
-#from sklearn.metrics import classification_report
+
+import keras
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.utils import to_categorical
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
 
 # --------------------- Configuration ----------------------------------------
 # training data control
-dataset_rawsize = 4
+dataset_rawsize = 50000					# dataset size per shape being recognized; in this case it is three
 dataset_size =  dataset_rawsize * 2 # will split up half for testing later 
-Normalrange  = 1000
-add_rand = True # switch to add in the random negative sample set
-# control how spread the noise is
-norm_mu,norm_sigma = 0, 10
+shape_points = 5
+num_classes = 3							# 3 classes for square, circle and triangle
 # DNN control 
 num_firstlayer = 40
 num_secondlayer = 20
 epochs = 50
-train_test_split = 0.25		# pct left for test validation. Keras use the latter port of dataset
+train_test_split = 0.25		# pct left for test validation during training. Keras use the latter part of dataset
 batch_size = 10
 # plot style control
 style.use('ggplot')
 plotmanifold = False
-
-shape_points = 5
 
 # ------------------ FORM THE RAW SQUARE TRAINING SET -----------------------------------------
 # a function to generate a set of random coordinates that lies on the square perimeter
@@ -51,7 +49,7 @@ def gen_square():
 squareset = np.empty(shape = [dataset_size, shape_points + 1, 2]) # add one for label
 for i in range(dataset_size):
 	# extra index bracket to keep shape correct, use axis otherwise flattened
-	squareset[i] = np.append(gen_square(), [[np.NaN, 1]], axis = 0)
+	squareset[i] = np.append(gen_square(), [[np.NaN, 0]], axis = 0)
 #print(squareset[:5])
 print('Rectangle training set shape:', squareset.shape)
 
@@ -73,7 +71,7 @@ def gen_circle():
 circleset = np.empty(shape = [dataset_size, shape_points+1, 2])
 for i in range(dataset_size):
 	# extra index bracket to keep shape correct, use axis otherwise flattened
-	circleset[i] = np.append(gen_circle(), [[np.NaN, 2]], axis = 0)
+	circleset[i] = np.append(gen_circle(), [[np.NaN, 1]], axis = 0)
 #print(circleset[:5])
 print('Circle training set shape:', circleset.shape)
 
@@ -105,7 +103,7 @@ def gen_triangle():
 triangleset = np.empty(shape = [dataset_size, shape_points+1, 2])
 for i in range(dataset_size):
 	# extra index bracket to keep shape correct, use axis otherwise flattened
-	triangleset[i] = np.append(gen_triangle(), [[np.NaN, 3]], axis = 0)
+	triangleset[i] = np.append(gen_triangle(), [[np.NaN, 2]], axis = 0)
 #print(triangleset[:5])
 print('Triangle training set shape:', triangleset.shape)
 
@@ -113,11 +111,34 @@ print('Triangle training set shape:', triangleset.shape)
 mainset = np.vstack((squareset, circleset, triangleset))
 np.random.shuffle(mainset)						# mix up all the shape before split
 # split into training and testing set
-trainX = mainset[:dataset_rawsize*3, :-2]		# extract all the data points columns
-trainY = mainset[:dataset_rawsize*3, -1]  		# extract last label column
-testX =  mainset[dataset_rawsize*3:, :-2]		# extract all the data points columns
-testY = mainset[dataset_rawsize*3:, -1]  		# extract last label column
-print(trainX)
-print(trainY)
-print(testX)
-print(testY)
+trainX = mainset[:dataset_rawsize*3, :-1]		# extract all the data points columns
+trainY = mainset[:dataset_rawsize*3, -1, 1].astype(int) 		# extract last label column
+testX =  mainset[dataset_rawsize*3:, :-1]		# extract all the data points columns
+testY = mainset[dataset_rawsize*3:, -1, 1].astype(int)  		# extract last label column
+
+trainY = to_categorical(trainY, num_classes = num_classes)
+testY = to_categorical(testY, num_classes = num_classes)
+
+print('Training set shape:', trainX.shape)
+print('Testing set shape:', testX.shape)
+print(trainX[:5])
+print(trainY[:5])
+print(testX[:5])
+print(testY[:5])
+
+# ------------------ BUILD DNN MODEL and TEST MODEL -----------------------------------------
+# create model
+model = Sequential()
+model.add(Flatten(input_shape=(5,2))) #get rid of the coordinate pairing
+model.add(Dense(num_firstlayer, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(num_secondlayer, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(3, kernel_initializer='uniform', activation='sigmoid'))
+# Compile model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+# Fit the model
+model.fit(trainX, trainY, epochs = epochs, batch_size= batch_size, validation_split = train_test_split, verbose=2)
+print(model.summary())
+# do prediction
+prediction = model.predict(testX, batch_size = batch_size, verbose = 2)
+round_prediction = [round(x[0]) for x in prediction]
+

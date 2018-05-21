@@ -14,7 +14,7 @@ from sklearn.metrics import classification_report
 
 # --------------------- Configuration ----------------------------------------
 # training data control
-dataset_rawsize = 50000					# dataset size per shape being recognized; in this case it is three
+dataset_rawsize = 1000					# dataset size per shape being recognized; in this case it is three
 dataset_size =  dataset_rawsize * 2 # will split up half for testing later 
 shape_points = 5
 num_classes = 3							# 3 classes for square, circle and triangle
@@ -140,5 +140,9 @@ model.fit(trainX, trainY, epochs = epochs, batch_size= batch_size, validation_sp
 print(model.summary())
 # do prediction
 prediction = model.predict(testX, batch_size = batch_size, verbose = 2)
-round_prediction = [round(x[0]) for x in prediction]
-
+# find the max probability as predicted by DNN
+predictionOneShot=np.zeros(prediction.shape, dtype = np.int)
+for index, i in enumerate(prediction.argmax(axis=1)):
+	predictionOneShot[index,i] = 1
+print(prediction[:10])
+print(predictionOneShot[:10])

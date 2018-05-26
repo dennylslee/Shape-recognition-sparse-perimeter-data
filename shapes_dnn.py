@@ -118,6 +118,7 @@ testY = mainset[dataset_rawsize*3:, -1, 1].astype(int)  		# extract last label c
 
 trainY = to_categorical(trainY, num_classes = num_classes)
 testY = to_categorical(testY, num_classes = num_classes)
+testY = testY.astype(int)
 
 print('Training set shape:', trainX.shape)
 print('Testing set shape:', testX.shape)
@@ -145,4 +146,5 @@ predictionOneShot=np.zeros(prediction.shape, dtype = np.int)
 for index, i in enumerate(prediction.argmax(axis=1)):
 	predictionOneShot[index,i] = 1
 print(prediction[:10])
-print(predictionOneShot[:10])
+print('Prediction', predictionOneShot[:10])
+print('Ground Truth', testY[:10])

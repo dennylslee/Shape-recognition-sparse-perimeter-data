@@ -148,3 +148,51 @@ for index, i in enumerate(prediction.argmax(axis=1)):
 print(prediction[:10])
 print('Prediction', predictionOneShot[:10])
 print('Ground Truth', testY[:10])
+
+# ----------------------Predictive Performance Evaluation--------------
+# Multi-class classification precision 
+# https://sebastianraschka.com/faq/docs/multiclass-metric.html
+
+Eval_len = predictionOneShot.shape[0]
+TP_sqr, TP_cir, TP_tri = 0, 0, 0
+FP_sqr, FP_cir, FP_tri = 0, 0, 0
+
+# prepare for micro-averaging evaluation
+for index, i in enumerate(predictionOneShot.argmax(axis=1)):
+	j = testY[index].argmax(axis=0)  # axis is zero since it is only one element within array
+	if i == 0:
+		if j ==0: 
+			TP_sqr += 1
+		else:  
+			FP_cir += 1
+			FP_tri += 1
+	elif i == 1:
+		if j ==1: 
+			TP_cir += 1
+		else:  
+			FP_sqr += 1
+			FP_tri += 1
+	else:
+		if j ==2: 
+			TP_tri += 1
+		else:  
+			FP_sqr += 1
+			FP_cir += 1
+
+TP_sqrpct = TP_sqr*100/Eval_len
+TP_cirpct = TP_cir*100/Eval_len
+TP_tripct = TP_tri*100/Eval_len
+FP_sqrpct = FP_sqr*100/Eval_len
+FP_cirpct = FP_cir*100/Eval_len
+FP_tripct = FP_tri*100/Eval_len
+
+Precision_sqr = TP_sqrpct*100/(TP_sqrpct+FP_sqrpct)
+Precision_cir = TP_cirpct*100/(TP_cirpct+FP_cirpct)
+Precision_tri = TP_tripct*100/(TP_tripct+FP_tripct)
+PrecisionMacro = (Precision_sqr+Precision_cir+Precision_tri)/3
+print('Precision - Macro-Averaging', PrecisionMacro)
+
+Sum_allTP = TP_sqrpct+TP_cirpct+TP_tripct
+Sum_allFP = FP_sqrpct+FP_cirpct+FP_tripct
+PrecisionMicro = Sum_allTP*100/(Sum_allTP+Sum_allFP)
+print ('Precision Micro-Averaging:',  PrecisionMicro)

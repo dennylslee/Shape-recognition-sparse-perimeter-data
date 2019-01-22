@@ -6,7 +6,7 @@ This project is a simple multi-class classification problem using supervised lea
 
 A few examples of data is illustrated below.  
 
-![pics](https://github.com/dennylslee/Multiplication-deepRL/blob/master/Multiplication-game-env-setup.png)
+![pics](https://github.com/dennylslee/Shape-recognition-sparse-perimeter-data/blob/master/Samples_data_on_shape_perimeter.png)
 
 
 # The design
